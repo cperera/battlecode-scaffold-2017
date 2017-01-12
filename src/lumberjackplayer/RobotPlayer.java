@@ -100,6 +100,8 @@ public strictfp class RobotPlayer {
                     rc.buildRobot(RobotType.SOLDIER, dir);
                 } else if (rc.canBuildRobot(RobotType.LUMBERJACK, dir) && Math.random() < .05 && rc.isBuildReady()) {
                     rc.buildRobot(RobotType.LUMBERJACK, dir);
+                } else if (rc.canBuildRobot(RobotType.SCOUT, dir) && Math.random() < .03 && rc.isBuildReady()){
+                    rc.buildRobot(RobotType.SCOUT, dir);
                 } else if (rc.canPlantTree(dir) && Math.random()<.08){
                     rc.plantTree(dir);
                 }
