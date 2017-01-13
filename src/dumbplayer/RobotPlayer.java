@@ -1,4 +1,4 @@
-package examplefuncsplayer;
+package dumbplayer;
 import battlecode.common.*;
 
 public strictfp class RobotPlayer {
@@ -29,6 +29,12 @@ public strictfp class RobotPlayer {
                 break;
             case LUMBERJACK:
                 runLumberjack();
+                break;
+            case SCOUT:
+                runScout();
+                break;
+            case TANK:
+                runTank();
                 break;
         }
 	}
@@ -90,6 +96,24 @@ public strictfp class RobotPlayer {
                     rc.buildRobot(RobotType.SOLDIER, dir);
                 } else if (rc.canBuildRobot(RobotType.LUMBERJACK, dir) && Math.random() < .01 && rc.isBuildReady()) {
                     rc.buildRobot(RobotType.LUMBERJACK, dir);
+                } else if (rc.canBuildRobot(RobotType.SCOUT, dir) && Math.random() < .01 && rc.isBuildReady()) {
+                    rc.buildRobot(RobotType.SCOUT, dir);
+                } else if (rc.canBuildRobot(RobotType.TANK, dir) && Math.random() < .01 && rc.isBuildReady()) {
+                    rc.buildRobot(RobotType.TANK, dir);
+                } else if (rc.canPlantTree(dir) && Math.random()<.02){
+                    rc.plantTree(dir);
+                }
+
+                // Water trees
+                TreeInfo[] nearbyTrees = rc.senseNearbyTrees();
+                boolean watering =  false;
+                for (TreeInfo t: nearbyTrees){
+                    if (t.getTeam() == rc.getTeam() && t.getHealth()<t.maxHealth - 5.0){
+                        if (rc.canWater(t.location) && !watering){
+                            watering = true;
+                            rc.water(t.location);
+                        }
+                    }
                 }
 
                 // Move randomly
@@ -106,7 +130,7 @@ public strictfp class RobotPlayer {
     }
 
     static void runSoldier() throws GameActionException {
-        System.out.println("I'm an soldier!");
+        System.out.println("I'm a soldier!");
         Team enemy = rc.getTeam().opponent();
 
         // The code you want your robot to perform every round should be in this loop
@@ -182,6 +206,62 @@ public strictfp class RobotPlayer {
                 e.printStackTrace();
             }
         }
+    }
+    static void runScout() throws GameActionException {
+        System.out.println("I'm a Scout!");
+        Team enemy = rc.getTeam().opponent();
+        while (true) {
+            try {
+                // See if there are any nearby enemy robots
+                RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
+
+                // If there are some...
+                if (robots.length > 0) {
+                    // And we have enough bullets, and haven't attacked yet this turn...
+                    if (rc.canFireSingleShot()) {
+                        // ...Then fire a bullet in the direction of the enemy.
+                        rc.fireSingleShot(rc.getLocation().directionTo(robots[0].location));
+                    }
+                }
+
+                // Move randomly
+                tryMove(randomDirection());
+
+                Clock.yield();
+            } catch (Exception e) {
+                System.out.println("Scout Exception");
+                e.printStackTrace();
+            }
+        }
+
+    }
+    static void runTank() throws GameActionException {
+        System.out.println("I'm a Tank!");
+        Team enemy = rc.getTeam().opponent();
+        while (true) {
+            try {
+                // See if there are any nearby enemy robots
+                RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
+
+                // If there are some...
+                if (robots.length > 0) {
+                    // And we have enough bullets, and haven't attacked yet this turn...
+                    if (rc.canFireTriadShot()) {
+                        // ...Then fire a bullet in the direction of the enemy.
+                        rc.fireTriadShot(rc.getLocation().directionTo(robots[0].location));
+                    }
+                }
+
+                // Move randomly
+                tryMove(randomDirection());
+
+                Clock.yield();
+            } catch (Exception e) {
+                System.out.println("Tank Exception");
+                e.printStackTrace();
+            }
+        }
+
     }
 
     /**
