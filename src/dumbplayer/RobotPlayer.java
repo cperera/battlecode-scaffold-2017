@@ -94,11 +94,11 @@ public strictfp class RobotPlayer {
                 // Randomly attempt to build a soldier or lumberjack in this direction
                 if (rc.canBuildRobot(RobotType.SOLDIER, dir) && Math.random() < .01) {
                     rc.buildRobot(RobotType.SOLDIER, dir);
-                } else if (rc.canBuildRobot(RobotType.LUMBERJACK, dir) && Math.random() < .01 && rc.isBuildReady()) {
+                } else if (rc.canBuildRobot(RobotType.LUMBERJACK, dir) && Math.random() < .02 && rc.isBuildReady()) {
                     rc.buildRobot(RobotType.LUMBERJACK, dir);
-                } else if (rc.canBuildRobot(RobotType.SCOUT, dir) && Math.random() < .01 && rc.isBuildReady()) {
+                } else if (rc.canBuildRobot(RobotType.SCOUT, dir) && Math.random() < .03 && rc.isBuildReady()) {
                     rc.buildRobot(RobotType.SCOUT, dir);
-                } else if (rc.canBuildRobot(RobotType.TANK, dir) && Math.random() < .01 && rc.isBuildReady()) {
+                } else if (rc.canBuildRobot(RobotType.TANK, dir) && Math.random() < .04 && rc.isBuildReady()) {
                     rc.buildRobot(RobotType.TANK, dir);
                 } else if (rc.canPlantTree(dir) && Math.random()<.02){
                     rc.plantTree(dir);
