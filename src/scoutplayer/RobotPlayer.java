@@ -214,8 +214,40 @@ public strictfp class RobotPlayer {
                     }
                 }*/
 
+                /*
+                    Okay there are now 4 channels:
+                    5: North moving scout
+                    6: South moving scout
+                    7: East moving scout
+                    8: West moving scout
+                    Each scout broadcasts its own ID onto its respective channel
+                 */
+                int n = rc.readBroadcast(5);
+                int s = rc.readBroadcast(6);
+                int e = rc.readBroadcast(7);
+                int w = rc.readBroadcast(8);
+
+                Direction myMove = null;
+                if (n == rc.getID() || n == 0) {
+                    myMove = Direction.getNorth();
+                    rc.broadcast(5, rc.getID());
+                }
+                else if (s == rc.getID() || s == 0) {
+                    myMove = Direction.getSouth();
+                    rc.broadcast(6, rc.getID());
+                }
+                else if (e == rc.getID() || e == 0) {
+                    myMove = Direction.getEast();
+                    rc.broadcast(7, rc.getID());
+                }
+                else if (w == rc.getID() || w == 0) {
+                    myMove = Direction.getWest();
+                    rc.broadcast(8, rc.getID());
+                }
+
+
                 // Move randomly
-                tryMove(randomDirection());
+                tryMove(myMove);
 
                 Clock.yield();
             } catch (Exception e) {
