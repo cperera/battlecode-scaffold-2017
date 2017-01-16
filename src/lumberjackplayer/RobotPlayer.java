@@ -1,6 +1,8 @@
 package lumberjackplayer;
 import battlecode.common.*;
 
+import java.util.ArrayList;
+
 public strictfp class RobotPlayer {
     static RobotController rc;
 
@@ -98,7 +100,7 @@ public strictfp class RobotPlayer {
                 // Randomly attempt to build a soldier or lumberjack in this direction
                 if (rc.canBuildRobot(RobotType.SOLDIER, dir) && Math.random() < .01) {
                     rc.buildRobot(RobotType.SOLDIER, dir);
-                } else if (rc.canBuildRobot(RobotType.LUMBERJACK, dir) && Math.random() < .05 && rc.isBuildReady()) {
+                } else if (rc.canBuildRobot(RobotType.LUMBERJACK, dir) && Math.random() < .15 && rc.isBuildReady()) {
                     rc.buildRobot(RobotType.LUMBERJACK, dir);
                 } else if (rc.canBuildRobot(RobotType.SCOUT, dir) && Math.random() < .03 && rc.isBuildReady()){
                     rc.buildRobot(RobotType.SCOUT, dir);
@@ -200,8 +202,32 @@ public strictfp class RobotPlayer {
 
                         tryMove(toEnemy);
                     } else {
+                        TreeInfo[] nearbyTrees = rc.senseNearbyTrees();
+                        boolean chopped = false;
+                        for (TreeInfo t: nearbyTrees){
+                            if (t.getTeam() != rc.getTeam() && rc.canChop(t.location)){
+                                rc.chop(t.location);
+                                chopped = true;
+                            }
+                        }
                         // Move Randomly
-                        tryMove(randomDirection());
+                        if (!chopped){
+                            ArrayList<TreeInfo> enemyTrees = new ArrayList<TreeInfo>();
+                            ArrayList<TreeInfo> neutrTrees = new ArrayList<TreeInfo>();
+                            for (TreeInfo t: nearbyTrees){
+                                if (t.getTeam() == enemy){
+                                    enemyTrees.add(t);
+                                }else if (t.getTeam()!= rc.getTeam()){
+                                    neutrTrees.add(t);
+                                }
+                            }
+                            if (enemyTrees.size()>0){
+                                tryMove(rc.getLocation().directionTo(enemyTrees.get(0).location));
+                            }else if (neutrTrees.size()>0){
+                                tryMove(rc.getLocation().directionTo(neutrTrees.get(0).location));
+                            }
+                            tryMove(randomDirection());
+                        }
                     }
                 }
 
