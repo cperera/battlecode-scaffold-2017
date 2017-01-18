@@ -6,6 +6,7 @@ Scouts:
 -have a better search algorithm for enemy gardeners
 -gang up on enemy gardeners
 -Have a good heuristic of whether this map is rotationally symmetric or has a line of reflection
+-Don't shoot other scouts!
 
 Archons:
 -Listen and remember all reports of trees
@@ -22,11 +23,17 @@ Gardeners:
     -Once far enough away from any gardeners or neutral trees, start spawning trees
     -The more gardeners already alive, the farther you should walk from the archon (spawn point)
 -Have gardeners tend 10 trees instead of 5
+<<<<<<< daeb47c65a4303758e03893d3f09acc2bcc5ff7f
 -Build more scouts and fewer trees at the very very beginning
 
 Soldiers:
 - If encountering enemy trees, walk around them; there's probably a hole in the tree formation as everyone has them.
 
 Plans:
-Build 1 gardener and 1 scout immediately. Have the scout find trees and shake them aggressively.
-Use our knowledge of maps being rotated or reflected to aggressively find their home base and kill their gardeners
+-Build 1 gardener and 1 scout immediately. Have the scout find trees and shake them aggressively. (check)
+-Use our knowledge of maps being rotated or reflected to aggressively find their home base and kill their gardeners
+-Build more scouts and fewer trees at the very very beginning   (check)
+
+
+
+

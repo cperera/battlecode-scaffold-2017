@@ -1,6 +1,7 @@
 package gardenscout;
 import battlecode.common.*;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,7 +42,7 @@ public strictfp class RobotPlayer {
 	}
 
     static void runArchon() throws GameActionException {
-        System.out.println("I'm an archon!");
+        System.out.println("I'm an archon! v2");
 
         // The code you want your robot to perform every round should be in this loop
         while (true) {
@@ -76,18 +77,77 @@ public strictfp class RobotPlayer {
     }
 
 	static void runGardener() throws GameActionException {
-        System.out.println("I'm a gardener!");
+        System.out.println("I'm a gardener! v0");
         Direction currentTree = new Direction(0);
 
-        Direction moveOut = new Direction((float)Math.random()* (float)Math.PI*2);
         int moveCount = 8;
         int treeCount = 5;
+        int scoutCount = 0;
+        int locationChannel = 6;
+        float MESHMULTIPLIER = 50f;
+        float MIN_DISTANCE = 6;
 
-        // move away from start
-        for (int i=0;i<moveCount;i++){
-            tryMove(moveOut);
-            Clock.yield();
+        ArrayList<MapLocation> otherGardenerLocations = new ArrayList<MapLocation>();
+
+        while (true) {
+            int otherLoc = rc.readBroadcast(locationChannel);
+            if (otherLoc == 0) {
+                break;
+            }
+            else {
+                locationChannel++;
+                float otherLocY = (otherLoc % 65536) / MESHMULTIPLIER;
+                float otherLocX = (otherLoc >> 16) / MESHMULTIPLIER;
+                MapLocation otherLocParsed = new MapLocation(otherLocX, otherLocY);
+                otherGardenerLocations.add(otherLocParsed);
+
+                System.out.println("Detected other at");
+                System.out.println(otherLocX);
+                System.out.println(otherLocY);
+            }
         }
+        System.out.println("My location channel is:");
+        System.out.println(locationChannel);
+
+//        try {
+//            if (locationChannel != 6) {
+//                // I am not the first gardener! move away!
+//                while (true) {
+//                    float minDist = -1;
+//                    MapLocation myLocation = rc.getLocation();
+//                    for (MapLocation otherGardener: otherGardenerLocations) {
+//                        float dist = myLocation.distanceTo(otherGardener);
+//                        if (dist < minDist || minDist == -1) {
+//                            minDist = dist;
+//                        }
+//                    }
+//                    System.out.println("Min dist:");
+//                    System.out.println(minDist);
+//
+//                    if (minDist > MIN_DISTANCE) {
+//                        System.out.println("Finally far enough away!");
+//                        break;
+//                    } else {
+//                        Direction randomMoveOut = new Direction((float)Math.random()* (float)Math.PI*4.0f);
+//                        tryMove(randomMoveOut);
+//                    }
+//                    Clock.yield();
+//                }
+//
+//            }
+//        }
+//        catch (Exception e) {
+//            e.printStackTrace();
+//        }
+
+        Direction moveOut = new Direction((float)Math.random()* (float)Math.PI*4.0f);
+        if (locationChannel != 6) {
+            for (int i=0;i<moveCount;i++) {
+                tryMove(moveOut);
+                Clock.yield();
+            }
+        }
+
 
         // The code you want your robot to perform every round should be in this loop
         while (true) {
@@ -101,6 +161,11 @@ public strictfp class RobotPlayer {
 
                 // Generate a random direction
                 Direction dir = currentTree;
+
+                if (scoutCount < 2 && rc.canBuildRobot(RobotType.SCOUT, dir)) {
+                    scoutCount++;
+                    rc.buildRobot(RobotType.SCOUT, dir);
+                }
 
                 if (treeCount==0) {
                     // Randomly attempt to build a soldier or lumberjack in this direction
@@ -116,8 +181,8 @@ public strictfp class RobotPlayer {
                 if (rc.canPlantTree(currentTree) && treeCount >0){
                     rc.plantTree(currentTree);
                     treeCount--;
-                    currentTree = new Direction(currentTree.radians + (float) Math.PI/3);
                 }
+                currentTree = new Direction(currentTree.radians + (float) Math.PI/3);
 
 
                 // water planted trees
@@ -143,6 +208,9 @@ public strictfp class RobotPlayer {
                     rc.donate( 10.0f);
                 }
 
+                MapLocation myLocation = rc.getLocation();
+                int locationPacked = (int)(myLocation.x * MESHMULTIPLIER) * 65536 + (int)(myLocation.y * MESHMULTIPLIER);
+                rc.broadcast(locationChannel, locationPacked);
 
                 // Clock.yield() makes the robot wait until the next turn, then it will perform this loop again
                 Clock.yield();
@@ -269,13 +337,13 @@ public strictfp class RobotPlayer {
                 RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
 
                 // Broadcast enemy Archon position if seen, on channels 9 and 10
-                for (RobotInfo r: robots){
-                    if (r.getType() == RobotType.ARCHON){
-                        MapLocation enemyArch = r.getLocation();
-                        rc.broadcast(9,(int)enemyArch.x);
-                        rc.broadcast(10,(int)enemyArch.y);
-                    }
-                }
+//                for (RobotInfo r: robots){
+//                    if (r.getType() == RobotType.ARCHON){
+//                        MapLocation enemyArch = r.getLocation();
+//                        rc.broadcast(9,(int)enemyArch.x);
+//                        rc.broadcast(10,(int)enemyArch.y);
+//                    }
+//                }
                 // move towards nearby gardener
                 for (RobotInfo r: robots){
                     if (r.getType() == RobotType.GARDENER){
@@ -301,11 +369,21 @@ public strictfp class RobotPlayer {
 
                 // Sense trees and shake if possible
                 TreeInfo[] trees = rc.senseNearbyTrees(-1,Team.NEUTRAL);
-                if (trees.length > 0 && rc.canShake(trees[0].location)){
-                    rc.shake(trees[0].location);
 
+                for (TreeInfo t: trees) {
+                    boolean canShake = rc.canShake(t.location);
+                    int numBullets = t.getContainedBullets();
+                    if (numBullets > 0) {
+                        if (canShake) {
+                            rc.shake(t.location);
+                            break;
+                        }
+                        else {
+                            myMove = rc.getLocation().directionTo(t.location);
+                            break;
+                        }
+                    }
                 }
-
 
                 if (!rc.canMove(myMove)){
                     myMove = new Direction((float) Math.PI * 2 * (float) Math.random());
@@ -425,3 +503,11 @@ public strictfp class RobotPlayer {
         return (perpendicularDist <= rc.getType().bodyRadius);
     }
 }
+
+/*
+
+Channel directory:
+    Archons broadcasting their locations: 0, 1, 2, 3, 4, 5, where even numbers are x and odd numbers are y
+
+    Gardeners broadcasting their locations: 6-46
+ */
