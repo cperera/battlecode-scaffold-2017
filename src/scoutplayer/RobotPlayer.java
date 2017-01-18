@@ -53,7 +53,7 @@ public strictfp class RobotPlayer {
                 }
 
                 // Randomly attempt to build a gardener in this direction
-                if (rc.canHireGardener(dir) && numGardeners < 1) {
+                if (rc.canHireGardener(dir) && numGardeners < 100) {
                     rc.hireGardener(dir);
                     numGardeners++;
                     rc.broadcast(2,7);
@@ -102,10 +102,10 @@ public strictfp class RobotPlayer {
                 } else if (rc.canBuildRobot(RobotType.LUMBERJACK, dir) && Math.random() < .01 && rc.isBuildReady()) {
                     rc.buildRobot(RobotType.LUMBERJACK, dir);
                 }*/
-                if (rc.canBuildRobot(RobotType.SCOUT,dir) && scouts<4){
+                if (rc.canBuildRobot(RobotType.SCOUT,dir) && scouts<20){
                     rc.buildRobot(RobotType.SCOUT,dir);
                     scouts++;
-                } else if (rc.canBuildRobot(RobotType.SOLDIER,dir) && soldiers<1){
+                } else if (rc.canBuildRobot(RobotType.SOLDIER,dir) && soldiers<10){
                     rc.buildRobot(RobotType.SOLDIER,dir);
                     soldiers++;
                 }
@@ -210,21 +210,15 @@ public strictfp class RobotPlayer {
         }
     }
     static void runScout() throws GameActionException {
-        System.out.println("I'm a Scout!");
+        System.out.println("I'm a Scout v3.4!");
         Team enemy = rc.getTeam().opponent();
+        Direction myMove = new Direction((float) Math.PI * 2 * (float) Math.random());
         while (true) {
             try {
+                boolean moved = false;
+
                 // See if there are any nearby enemy robots
                 RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
-
-                // If there are some...
-                if (robots.length > 0) {
-                    // And we have enough bullets, and haven't attacked yet this turn...
-                    if (rc.canFireSingleShot()) {
-                        // ...Then fire a bullet in the direction of the enemy.
-                        rc.fireSingleShot(rc.getLocation().directionTo(robots[0].location));
-                    }
-                }
 
                 // Broadcast enemy Archon position if seen, on channels 9 and 10
                 for (RobotInfo r: robots){
@@ -234,41 +228,43 @@ public strictfp class RobotPlayer {
                         rc.broadcast(10,(int)enemyArch.y);
                     }
                 }
-
-                /*
-                    Okay there are now 4 channels:
-                    5: North moving scout
-                    6: South moving scout
-                    7: East moving scout
-                    8: West moving scout
-                    Each scout broadcasts its own ID onto its respective channel
-                 */
-                int n = rc.readBroadcast(5);
-                int s = rc.readBroadcast(6);
-                int e = rc.readBroadcast(7);
-                int w = rc.readBroadcast(8);
-
-                Direction myMove = null;
-                if (n == rc.getID() || n == 0) {
-                    myMove = Direction.getNorth();
-                    rc.broadcast(5, rc.getID());
-                }
-                else if (s == rc.getID() || s == 0) {
-                    myMove = Direction.getSouth();
-                    rc.broadcast(6, rc.getID());
-                }
-                else if (e == rc.getID() || e == 0) {
-                    myMove = Direction.getEast();
-                    rc.broadcast(7, rc.getID());
-                }
-                else if (w == rc.getID() || w == 0) {
-                    myMove = Direction.getWest();
-                    rc.broadcast(8, rc.getID());
+                // move towards nearby gardener
+                for (RobotInfo r: robots){
+                    if (r.getType() == RobotType.GARDENER){
+                        myMove = rc.getLocation().directionTo(r.location);
+                        if (rc.canMove(myMove, 1.4f)){
+                            rc.move(myMove,1.4f);
+                            moved = true;
+                        }
+                        break;
+                    }
                 }
 
+                // Sense trees and shake if possible
+                TreeInfo[] trees = rc.senseNearbyTrees(-1,Team.NEUTRAL);
+                if (trees.length > 0 && rc.canShake(trees[0].location)){
+                    rc.shake(trees[0].location);
+
+                }
+
+
+                if (!rc.canMove(myMove)){
+                    myMove = new Direction((float) Math.PI * 2 * (float) Math.random());
+                }
 
                 // Move in my direction
-                tryMove(myMove);
+                if (!moved) {
+                    tryMove(myMove);
+                }
+
+                // If there are some robots to shoot ...
+                if (robots.length > 0) {
+                    // And we have enough bullets, and haven't attacked yet this turn...
+                    if (rc.canFireSingleShot()) {
+                        // ...Then fire a bullet in the direction of the enemy.
+                        rc.fireSingleShot(rc.getLocation().directionTo(robots[0].location));
+                    }
+                }
 
                 Clock.yield();
             } catch (Exception e) {
