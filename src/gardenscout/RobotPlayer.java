@@ -19,13 +19,6 @@ public strictfp class RobotPlayer {
         // and to get information on its current status.
         RobotPlayer.rc = rc;
 
-        // Tree shaking! All robots to shake trees until further notice.
-        TreeInfo[] trees = rc.senseNearbyTrees();
-        if (trees.length > 0 && rc.canShake(trees[0].location)){
-            rc.shake(trees[0].location);
-            System.out.println("Tree shaken!");
-        }
-
         // Here, we've separated the controls into a different method for each RobotType.
         // You can add the missing ones or rewrite this into your own control structure.
         switch (rc.getType()) {
@@ -60,7 +53,7 @@ public strictfp class RobotPlayer {
                 Direction dir = randomDirection();
 
                 // Randomly attempt to build a gardener in this direction
-                if (rc.canHireGardener(dir) && Math.random() < .1) {
+                if (rc.canHireGardener(dir) && rc.getRobotCount()<40) {
                     rc.hireGardener(dir);
                 }
 
@@ -85,6 +78,17 @@ public strictfp class RobotPlayer {
 	static void runGardener() throws GameActionException {
         System.out.println("I'm a gardener!");
         Direction currentTree = new Direction(0);
+
+        Direction moveOut = new Direction((float)Math.random()* (float)Math.PI*2);
+        int moveCount = 8;
+        int treeCount = 5;
+
+        // move away from start
+        for (int i=0;i<moveCount;i++){
+            tryMove(moveOut);
+            Clock.yield();
+        }
+
         // The code you want your robot to perform every round should be in this loop
         while (true) {
             // Try/catch blocks stop unhandled exceptions, which cause your robot to explode
@@ -96,21 +100,25 @@ public strictfp class RobotPlayer {
                 MapLocation archonLoc = new MapLocation(xPos,yPos);
 
                 // Generate a random direction
-                Direction dir = randomDirection();
+                Direction dir = currentTree;
 
-                // Randomly attempt to build a soldier or lumberjack in this direction
-                if (rc.canBuildRobot(RobotType.SOLDIER, dir) && Math.random() < .01) {
-                    rc.buildRobot(RobotType.SOLDIER, dir);
-                } else if (rc.canBuildRobot(RobotType.LUMBERJACK, dir) && Math.random() < .15 && rc.isBuildReady()) {
-                    rc.buildRobot(RobotType.LUMBERJACK, dir);
-                } else if (rc.canBuildRobot(RobotType.SCOUT, dir) && Math.random() < .3 && rc.isBuildReady()){
-                    rc.buildRobot(RobotType.SCOUT, dir);
+                if (treeCount==0) {
+                    // Randomly attempt to build a soldier or lumberjack in this direction
+                    if (rc.canBuildRobot(RobotType.SOLDIER, dir) && Math.random() < .00) {
+                        rc.buildRobot(RobotType.SOLDIER, dir);
+                    } else if (rc.canBuildRobot(RobotType.LUMBERJACK, dir) && Math.random() < .15 && rc.isBuildReady()) {
+                        rc.buildRobot(RobotType.LUMBERJACK, dir);
+                    } else if (rc.canBuildRobot(RobotType.SCOUT, dir) && Math.random() < .6 && rc.isBuildReady()) {
+                        rc.buildRobot(RobotType.SCOUT, dir);
+                    }
                 }
 
-                if (rc.canPlantTree(currentTree)){
+                if (rc.canPlantTree(currentTree) && treeCount >0){
                     rc.plantTree(currentTree);
+                    treeCount--;
+                    currentTree = new Direction(currentTree.radians + (float) Math.PI/3);
                 }
-                currentTree = new Direction(currentTree.radians + (float) Math.PI/12);
+
 
                 // water planted trees
                 TreeInfo[] nearbyTrees = rc.senseNearbyTrees();
