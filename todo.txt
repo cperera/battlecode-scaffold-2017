@@ -24,7 +24,8 @@ Gardeners:
 -Have gardeners tend 10 trees instead of 5
 -Build more scouts and fewer trees at the very very beginning
 
-
+Soldiers:
+- If encountering enemy trees, walk around them; there's probably a hole in the tree formation as everyone has them.
 
 Plans:
 Build 1 gardener and 1 scout immediately. Have the scout find trees and shake them aggressively.
