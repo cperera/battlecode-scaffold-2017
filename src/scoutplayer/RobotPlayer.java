@@ -80,6 +80,7 @@ public strictfp class RobotPlayer {
 	static void runGardener() throws GameActionException {
         System.out.println("I'm a gardener!");
         int scouts = 0;
+        int soldiers = 0;
 
         // The code you want your robot to perform every round should be in this loop
         while (true) {
@@ -104,6 +105,9 @@ public strictfp class RobotPlayer {
                 if (rc.canBuildRobot(RobotType.SCOUT,dir) && scouts<4){
                     rc.buildRobot(RobotType.SCOUT,dir);
                     scouts++;
+                } else if (rc.canBuildRobot(RobotType.SOLDIER,dir) && soldiers<1){
+                    rc.buildRobot(RobotType.SOLDIER,dir);
+                    soldiers++;
                 }
 
                 // Move randomly
@@ -122,6 +126,7 @@ public strictfp class RobotPlayer {
     static void runSoldier() throws GameActionException {
         System.out.println("I'm an soldier!");
         Team enemy = rc.getTeam().opponent();
+        MapLocation targetLoc = rc.getLocation();
 
         // The code you want your robot to perform every round should be in this loop
         while (true) {
@@ -143,7 +148,14 @@ public strictfp class RobotPlayer {
                 }
 
                 // Move randomly
-                tryMove(randomDirection());
+                // tryMove(randomDirection());
+                int xpos = rc.readBroadcast(9);
+                int ypos = rc.readBroadcast(10);
+                if (xpos != 0){
+                    targetLoc = new MapLocation(xpos,ypos);
+                }
+                Direction myDir = myLocation.directionTo(targetLoc);
+                tryMove(myDir);
 
                 // Clock.yield() makes the robot wait until the next turn, then it will perform this loop again
                 Clock.yield();
@@ -203,7 +215,7 @@ public strictfp class RobotPlayer {
         while (true) {
             try {
                 // See if there are any nearby enemy robots
-                /*RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
+                RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
 
                 // If there are some...
                 if (robots.length > 0) {
@@ -212,7 +224,16 @@ public strictfp class RobotPlayer {
                         // ...Then fire a bullet in the direction of the enemy.
                         rc.fireSingleShot(rc.getLocation().directionTo(robots[0].location));
                     }
-                }*/
+                }
+
+                // Broadcast enemy Archon position if seen, on channels 9 and 10
+                for (RobotInfo r: robots){
+                    if (r.getType() == RobotType.ARCHON){
+                        MapLocation enemyArch = r.getLocation();
+                        rc.broadcast(9,(int)enemyArch.x);
+                        rc.broadcast(10,(int)enemyArch.y);
+                    }
+                }
 
                 /*
                     Okay there are now 4 channels:
